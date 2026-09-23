@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mdscript name="Marketeer_Detector" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+	<cues>
+		<cue name="OnPlayerScan">
+			<conditions>
+				<event_player_changed_activity activity="activity.scan"/>
+				<check_value value="md.Boarding.OperationCreated.state == cuestate.waiting" />
+			</conditions>
+			<actions>
+				<find_station name="$ClosestStation" space="player.sector" sortbydistanceto="player.entity"/>
+				<do_if value="$ClosestStation.shadyguy and player.ship.distanceto.{$ClosestStation} lt 7500 and not $ClosestStation.shadyguy.tradesvisible">													
+					<speak actor="player.computer" priority="100" caninterrupt="false">
+					  <text page="10002" line="30201101" delay="1s"/>
+					</speak>
+				</do_if>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="OnSectorChange_ShadyGuyLookup">
+			<conditions>
+				<event_object_changed_sector object="player.entity"/>
+				<check_value value="player.sector != null"/>
+			</conditions>
+			<actions>
+				<set_value name="$SectorHasShadyGuy" exact="false"/>
+				<!-- collect all sector stations -->
+				<!-- same requirements as in vanilla -->
+				<find_station name="$PossibleStations" piratebase="false" space="player.sector" multiple="true">
+                    <match_products wares="[ware.majadust, ware.spacefuel, ware.spaceweed]" negate="true" />
+                    <match owner="[faction.player, faction.xenon, faction.khaak, faction.ownerless, faction.civilian]" negate="true" />
+                </find_station>
+				<!-- iterate through all stations, if any has illegal trader, set detection varibla to true and break the loop. -->
+				<do_for_each name="$Station" in="$PossibleStations" counter="$StationCounter" reverse="true">
+				  <do_if value="$Station.shadyguy">
+					<set_value name="$SectorHasShadyGuy" exact="true"/>
+					<!-- <write_to_logbook category="general" title="Found" text="'Found shady guy in %s'.[player.sector.name]"/> -->
+					<break/>
+				  </do_if>
+				</do_for_each>
+				<!-- If no illegal trader in sector, ask md to create one -->
+				<do_if value="not $SectorHasShadyGuy">
+					<!-- <write_to_logbook category="general" title="Adding" text="'Adding shady guy in %s'.[player.sector]"/> -->
+					<signal_cue_instantly cue="md.NPC_ShadyGuy.EvaluateSectors" param="[player.sector]" />
+				</do_if>
+				<!-- cleanup -->
+				<remove_value name="$PossibleStations"/>
+				<remove_value name="$SectorHasShadyGuy"/>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+	</cues>
+</mdscript>
