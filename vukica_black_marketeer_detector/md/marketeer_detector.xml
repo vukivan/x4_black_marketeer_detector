@@ -16,37 +16,5 @@
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
-		<cue name="OnSectorChange_ShadyGuyLookup">
-			<conditions>
-				<event_object_changed_sector object="player.entity"/>
-				<check_value value="player.sector != null"/>
-			</conditions>
-			<actions>
-				<set_value name="$SectorHasShadyGuy" exact="false"/>
-				<!-- collect all sector stations -->
-				<!-- same requirements as in vanilla -->
-				<find_station name="$PossibleStations" piratebase="false" space="player.sector" multiple="true">
-                    <match_products wares="[ware.majadust, ware.spacefuel, ware.spaceweed]" negate="true" />
-                    <match owner="[faction.player, faction.xenon, faction.khaak, faction.ownerless, faction.civilian]" negate="true" />
-                </find_station>
-				<!-- iterate through all stations, if any has illegal trader, set detection varibla to true and break the loop. -->
-				<do_for_each name="$Station" in="$PossibleStations" counter="$StationCounter" reverse="true">
-				  <do_if value="$Station.shadyguy">
-					<set_value name="$SectorHasShadyGuy" exact="true"/>
-					<!-- <write_to_logbook category="general" title="Found" text="'Found shady guy in %s'.[player.sector.name]"/> -->
-					<break/>
-				  </do_if>
-				</do_for_each>
-				<!-- If no illegal trader in sector, ask md to create one -->
-				<do_if value="not $SectorHasShadyGuy">
-					<!-- <write_to_logbook category="general" title="Adding" text="'Adding shady guy in %s'.[player.sector]"/> -->
-					<signal_cue_instantly cue="md.NPC_ShadyGuy.EvaluateSectors" param="[player.sector]" />
-				</do_if>
-				<!-- cleanup -->
-				<remove_value name="$PossibleStations"/>
-				<remove_value name="$SectorHasShadyGuy"/>
-				<reset_cue cue="this" />
-			</actions>
-		</cue>
 	</cues>
 </mdscript>
